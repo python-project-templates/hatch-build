@@ -9,5 +9,11 @@ A minimal CLI wrapper around hatchling build
 
 ## Overview
 
+This library provides a minimal CLI `hatch-build`, equivalent to [`hatchling build`](https://hatch.pypa.io/latest/) except for [the enablement of passthrough arguments](https://github.com/pypa/hatch/pull/1743).
+
+```bash
+hatch-build -- --my-custom-plugin-arg
+```
+
 > [!NOTE]
 > This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).
