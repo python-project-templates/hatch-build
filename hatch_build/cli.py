@@ -34,23 +34,3 @@ def hatchling() -> int:
         command(**kwargs)
 
     return 0
-
-    # parser = subparsers.add_parser('build')
-    # parser.add_argument(
-    #     '-d', '--directory', dest='directory', help='The directory in which to build artifacts', **defaults
-    # )
-    # parser.add_argument(
-    #     '-t',
-    #     '--target',
-    #     dest='targets',
-    #     action='append',
-    #     help='Comma-separated list of targets to build, overriding project defaults',
-    #     **defaults,
-    # )
-    # parser.add_argument('--hooks-only', dest='hooks_only', action='store_true', default=None)
-    # parser.add_argument('--no-hooks', dest='no_hooks', action='store_true', default=None)
-    # parser.add_argument('-c', '--clean', dest='clean', action='store_true', default=None)
-    # parser.add_argument('--clean-hooks-after', dest='clean_hooks_after', action='store_true', default=None)
-    # parser.add_argument('--clean-only', dest='clean_only', action='store_true')
-    # parser.add_argument('--app', dest='called_by_app', action='store_true', help=argparse.SUPPRESS)
-    # parser.set_defaults(func=build_impl)
