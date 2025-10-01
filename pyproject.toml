@@ -31,7 +31,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "hatchling>=1.14.1,<1.15",
+    "hatchling>=1.14.1,<1.28",
 ]
 
 [project.optional-dependencies]
