@@ -50,7 +50,15 @@ def ok_extra_argv():
 @pytest.fixture
 def get_arg():
     tmp_argv = sys.argv
-    sys.argv = ["hatch-build", "--", "--extra-arg", "--extra-arg-with-value", "value", "--extra-arg-with-value-equals=value2"]
+    sys.argv = [
+        "hatch-build",
+        "--",
+        "--extra-arg",
+        "--extra-arg-with-value",
+        "value",
+        "--extra-arg-with-value-equals=value2",
+        "--extra-arg-not-in-parser",
+    ]
     parser = ArgumentParser()
     parser.add_argument("--extra-arg", action="store_true")
     parser.add_argument("--extra-arg-with-value")
@@ -103,6 +111,13 @@ class TestHatchBuild:
     def test_get_arg(self, get_arg):
         assert hatchling() == 0
         args, _ = parse_extra_args(get_arg)
-        assert args.extra_arg is True
-        assert args.extra_arg_with_value == "value"
-        assert args.extra_arg_with_value_equals == "value2"
+        assert args["extra_arg"] is True
+        assert args["extra_arg_with_value"] == "value"
+        assert args["extra_arg_with_value_equals"] == "value2"
+
+    def test_get_arg_no_passthrough(self, get_arg):
+        assert hatchling() == 0
+        _, kwargs = parse_extra_args()
+        assert "--extra-arg" in kwargs
+        assert "--extra-arg-with-value" in kwargs
+        assert kwargs[kwargs.index("--extra-arg-with-value") + 1] == "value"
