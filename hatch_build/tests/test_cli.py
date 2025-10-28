@@ -1,9 +1,10 @@
 import sys
+from argparse import ArgumentParser
 from unittest.mock import patch
 
 import pytest
 
-from hatch_build.cli import hatchling
+from hatch_build.cli import hatchling, parse_extra_args
 
 
 @pytest.fixture
@@ -43,6 +44,18 @@ def ok_extra_argv():
     tmp_argv = sys.argv
     sys.argv = ["hatch-build", "--", "--extra-arg"]
     yield
+    sys.argv = tmp_argv
+
+
+@pytest.fixture
+def get_arg():
+    tmp_argv = sys.argv
+    sys.argv = ["hatch-build", "--", "--extra-arg", "--extra-arg-with-value", "value", "--extra-arg-with-value-equals=value2"]
+    parser = ArgumentParser()
+    parser.add_argument("--extra-arg", action="store_true")
+    parser.add_argument("--extra-arg-with-value")
+    parser.add_argument("--extra-arg-with-value-equals")
+    yield parser
     sys.argv = tmp_argv
 
 
@@ -86,3 +99,10 @@ class TestHatchBuild:
 
     def test_ok_extras(self, ok_extra_argv):
         assert hatchling() == 0
+
+    def test_get_arg(self, get_arg):
+        assert hatchling() == 0
+        args, _ = parse_extra_args(get_arg)
+        assert args.extra_arg is True
+        assert args.extra_arg_with_value == "value"
+        assert args.extra_arg_with_value_equals == "value2"
