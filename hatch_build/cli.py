@@ -10,8 +10,11 @@ __all__ = (
 _extras = None
 
 
-def parse_extra_args(subparser: Optional[ArgumentParser]) -> List[str]:
-    return subparser.parse_args(_extras) if _extras else {}, []
+def parse_extra_args(subparser: Optional[ArgumentParser] = None) -> List[str]:
+    if subparser is None:
+        subparser = ArgumentParser(prog="hatch-build-extras", allow_abbrev=False)
+    kwargs, extras = subparser.parse_known_args(_extras or [])
+    return vars(kwargs), extras
 
 
 def _hatchling_internal() -> Tuple[Optional[Callable], Optional[dict], List[str]]:
