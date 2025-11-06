@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 __all__ = (
     "hatchling",
     "parse_extra_args",
+    "parse_extra_args_model",
 )
 _extras = None
 
@@ -20,7 +21,7 @@ def parse_extra_args(subparser: Optional[ArgumentParser] = None) -> List[str]:
     return vars(kwargs), extras
 
 
-def recurse_add_fields(parser: ArgumentParser, model: "BaseModel", prefix: str = ""):
+def _recurse_add_fields(parser: ArgumentParser, model: "BaseModel", prefix: str = ""):
     from pydantic import BaseModel
 
     for field_name, field in model.__class__.model_fields.items():
@@ -30,7 +31,7 @@ def recurse_add_fields(parser: ArgumentParser, model: "BaseModel", prefix: str =
             parser.add_argument(arg_name, action="store_true", default=field.default)
         elif isinstance(field_type, Type) and issubclass(field_type, BaseModel):
             # Nested model, add its fields with a prefix
-            recurse_add_fields(parser, getattr(model, field_name), prefix=f"{field_name}.")
+            _recurse_add_fields(parser, getattr(model, field_name), prefix=f"{field_name}.")
         elif get_origin(field_type) in (list, List):
             # TODO: if list arg is complex type, raise as not implemented for now
             if get_args(field_type) and get_args(field_type)[0] not in (str, int, float, bool):
@@ -61,7 +62,7 @@ def parse_extra_args_model(model: "BaseModel"):
     # Recursively parse fields from a pydantic model and its sub-models
     # and create an argument parser to parse extra args
     parser = ArgumentParser(prog="hatch-build-extras-model", allow_abbrev=False)
-    parser = recurse_add_fields(parser, model)
+    parser = _recurse_add_fields(parser, model)
 
     # Parse the extra args and update the model
     args, kwargs = parse_extra_args(parser)
