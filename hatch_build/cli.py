@@ -94,7 +94,7 @@ def _recurse_add_fields(parser: ArgumentParser, model: Union["BaseModel", Type["
 
 def parse_extra_args_model(model: "BaseModel"):
     try:
-        from pydantic import BaseModel, TypeAdapter
+        from pydantic import BaseModel, TypeAdapter, ValidationError
     except ImportError:
         raise ImportError("pydantic is required to use parse_extra_args_model")
     # Recursively parse fields from a pydantic model and its sub-models
@@ -139,16 +139,22 @@ def parse_extra_args_model(model: "BaseModel"):
 
         # Convert the value using the type adapter
         if get_origin(field.annotation) in (list, List):
-            value = adapter.validate_python(value.split(","))
+            value = value or ""
+            value = value.split(",")
         elif get_origin(field.annotation) in (dict, Dict):
+            value = value or ""
             dict_items = value.split(",")
             dict_value = {}
             for item in dict_items:
-                k, v = item.split("=", 1)
-                dict_value[k] = v
-            value = adapter.validate_python(dict_value)
-        else:
+                if item:
+                    k, v = item.split("=", 1)
+                    dict_value[k] = v
+            value = dict_value
+        try:
             value = adapter.validate_python(value)
+        except ValidationError:
+            _log.warning(f"Failed to validate field '{key}' with value '{value}' for model '{model_to_set.__class__.__name__}'")
+            continue
 
         # Set the value on the model
         setattr(model_to_set, key, value)
