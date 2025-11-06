@@ -49,22 +49,24 @@ def ok_extra_argv():
 
 @pytest.fixture
 def get_arg():
-    tmp_argv = sys.argv
-    sys.argv = [
-        "hatch-build",
-        "--",
-        "--extra-arg",
-        "--extra-arg-with-value",
-        "value",
-        "--extra-arg-with-value-equals=value2",
-        "--extra-arg-not-in-parser",
-    ]
-    parser = ArgumentParser()
-    parser.add_argument("--extra-arg", action="store_true")
-    parser.add_argument("--extra-arg-with-value")
-    parser.add_argument("--extra-arg-with-value-equals")
-    yield parser
-    sys.argv = tmp_argv
+    with patch.object(
+        sys,
+        "argv",
+        [
+            "hatch-build",
+            "--",
+            "--extra-arg",
+            "--extra-arg-with-value",
+            "value",
+            "--extra-arg-with-value-equals=value2",
+            "--extra-arg-not-in-parser",
+        ],
+    ):
+        parser = ArgumentParser()
+        parser.add_argument("--extra-arg", action="store_true")
+        parser.add_argument("--extra-arg-with-value")
+        parser.add_argument("--extra-arg-with-value-equals")
+        yield parser
 
 
 class TestHatchBuild:
