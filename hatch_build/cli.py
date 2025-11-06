@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type, get_args, get_origin
+from logging import getLogger
+from typing import TYPE_CHECKING, Callable, Dict, List, Literal, Optional, Tuple, Type, get_args, get_origin
 
 from hatchling.cli.build import build_command
 
@@ -12,6 +13,8 @@ __all__ = (
     "parse_extra_args_model",
 )
 _extras = None
+
+_log = getLogger(__name__)
 
 
 def parse_extra_args(subparser: Optional[ArgumentParser] = None) -> List[str]:
@@ -29,28 +32,40 @@ def _recurse_add_fields(parser: ArgumentParser, model: "BaseModel", prefix: str 
         arg_name = f"--{prefix}{field_name.replace('_', '-')}"
         if field_type is bool:
             parser.add_argument(arg_name, action="store_true", default=field.default)
-        elif isinstance(field_type, Type) and issubclass(field_type, BaseModel):
-            # Nested model, add its fields with a prefix
-            _recurse_add_fields(parser, getattr(model, field_name), prefix=f"{field_name}.")
-        elif get_origin(field_type) in (list, List):
-            # TODO: if list arg is complex type, raise as not implemented for now
-            if get_args(field_type) and get_args(field_type)[0] not in (str, int, float, bool):
-                raise NotImplementedError("Only lists of str, int, float, or bool are supported")
-            parser.add_argument(arg_name, type=str, default=",".join(map(str, field.default)))
-        elif get_origin(field_type) in (dict, Dict):
-            # TODO: if key args are complex type, raise as not implemented for now
-            key_type, value_type = get_args(field_type)
-            if key_type not in (str, int, float, bool):
-                raise NotImplementedError("Only dicts with str keys are supported")
-            if value_type not in (str, int, float, bool):
-                raise NotImplementedError("Only dicts with str values are supported")
-            parser.add_argument(arg_name, type=str, default=",".join(f"{k}={v}" for k, v in field.default.items()))
-        else:
+        elif field_type in (str, int, float):
             try:
                 parser.add_argument(arg_name, type=field_type, default=field.default)
             except TypeError:
                 # TODO: handle more complex types if needed
                 parser.add_argument(arg_name, type=str, default=field.default)
+        elif isinstance(field_type, Type) and issubclass(field_type, BaseModel):
+            # Nested model, add its fields with a prefix
+            _recurse_add_fields(parser, getattr(model, field_name), prefix=f"{field_name}.")
+        elif get_origin(field_type) is Literal:
+            literal_args = get_args(field_type)
+            if not all(isinstance(arg, (str, int, float, bool)) for arg in literal_args):
+                _log.warning(f"Only Literal types of str, int, float, or bool are supported - got {literal_args}")
+            else:
+                parser.add_argument(arg_name, type=type(literal_args[0]), choices=literal_args, default=field.default)
+        elif get_origin(field_type) in (list, List):
+            # TODO: if list arg is complex type, warn as not implemented for now
+            if get_args(field_type) and get_args(field_type)[0] not in (str, int, float, bool):
+                _log.warning(f"Only lists of str, int, float, or bool are supported - got {get_args(field_type)[0]}")
+            else:
+                parser.add_argument(arg_name, type=str, default=",".join(map(str, field.default)) if isinstance(field, str) else None)
+        elif get_origin(field_type) in (dict, Dict):
+            # TODO: if key args are complex type, warn as not implemented for now
+            key_type, value_type = get_args(field_type)
+            if key_type not in (str, int, float, bool):
+                _log.warning(f"Only dicts with str keys are supported - got key type {key_type}")
+            if value_type not in (str, int, float, bool):
+                _log.warning(f"Only dicts with str values are supported - got value type {value_type}")
+            else:
+                parser.add_argument(
+                    arg_name, type=str, default=",".join(f"{k}={v}" for k, v in field.default.items()) if isinstance(field.default, dict) else None
+                )
+        else:
+            _log.warning(f"Unsupported field type for argument '{arg_name}': {field_type}")
     return parser
 
 
