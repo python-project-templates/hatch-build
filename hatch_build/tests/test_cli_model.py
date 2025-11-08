@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from pydantic import BaseModel
 
+from hatch_build import __version__
 from hatch_build.cli import _initlog, hatchling, parse_extra_args_model
 
 
@@ -141,8 +142,8 @@ class TestCLIMdel:
 
         stderr = mock_stderr.getvalue()
         for text in (
-            "[sdist]\ndist/hatch_build-0.3.1.tar.gz",
-            "[wheel]\ndist/hatch_build-0.3.1-py3-none-any.whl",
+            f"[sdist]\ndist/hatch_build-{__version__}.tar.gz",
+            f"[wheel]\ndist/hatch_build-{__version__}-py3-none-any.whl",
             "[hatch_build.cli][WARNING]: Only lists of str, int, float, or bool are supported - field `submodel_list` got <class 'test_cli_model.SubModel'>",
             "[hatch_build.cli][WARNING]: Only dicts with str, int, float, bool, or enum values are supported - field `submodel_dict` got value type <class 'test_cli_model.SubModel'>",
             "[hatch_build.cli][WARNING]: Only Literal types of str, int, float, or bool are supported - field `unsupported_literal` got (b'test',)",
