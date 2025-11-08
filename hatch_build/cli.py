@@ -1,11 +1,10 @@
-import sys
 from argparse import ArgumentParser
 from enum import Enum
-from logging import Formatter, StreamHandler, getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, List, Literal, Optional, Tuple, Type, Union, get_args, get_origin
 
 from hatchling.cli.build import build_command
+from pkn.logging import getSimpleLogger
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -22,11 +21,7 @@ _log = None
 
 def _initlog(level: str = "WARNING"):
     global _log
-    _log = getLogger(__name__)
-    _handler = StreamHandler(stream=sys.stderr)
-    _formatter = Formatter("[%(asctime)s][%(name)s][%(levelname)s]: %(message)s", datefmt="%Y-%m-%dT%H:%M:%S%z")
-    _handler.setFormatter(_formatter)
-    _log.addHandler(_handler)
+    _log = getSimpleLogger(__name__)
     _log.setLevel(level)
 
 
