@@ -1,4 +1,5 @@
 import sys
+from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Literal, Optional
 from unittest.mock import patch
@@ -6,6 +7,11 @@ from unittest.mock import patch
 from pydantic import BaseModel
 
 from hatch_build.cli import hatchling, parse_extra_args_model
+
+
+class MyEnum(Enum):
+    OPTION_A = "option_a"
+    OPTION_B = "option_b"
 
 
 class SubModel(BaseModel, validate_assignment=True):
@@ -19,6 +25,7 @@ class MyTopLevelModel(BaseModel, validate_assignment=True):
     extra_arg_with_value_equals: Optional[str] = "default_equals"
     extra_arg_literal: Literal["a", "b", "c"] = "a"
 
+    enum_arg: MyEnum = MyEnum.OPTION_A
     list_arg: List[int] = [1, 2, 3]
     dict_arg: Dict[str, str] = {}
     dict_arg_default_values: Dict[str, str] = {"existing-key": "existing-value"}
@@ -32,6 +39,8 @@ class MyTopLevelModel(BaseModel, validate_assignment=True):
     submodel_list_instanced: List[SubModel] = [SubModel()]
     submodel_dict: Dict[str, SubModel] = {}
     submodel_dict_instanced: Dict[str, SubModel] = {"a": SubModel()}
+
+    unsupported_literal: Literal[b"test"] = b"test"
 
 
 class TestCLIMdel:
@@ -49,6 +58,8 @@ class TestCLIMdel:
                 "--extra-arg-not-in-parser",
                 "--extra-arg-literal",
                 "b",
+                "--enum-arg",
+                "option_b",
                 "--list-arg",
                 "1,2,3",
                 "--dict-arg",
@@ -80,6 +91,7 @@ class TestCLIMdel:
         assert model.extra_arg_with_value == "value"
         assert model.extra_arg_with_value_equals == "value2"
         assert model.extra_arg_literal == "b"
+        assert model.enum_arg == MyEnum.OPTION_B
         assert model.list_arg == [1, 2, 3]
         assert model.dict_arg == {"key1": "value1", "key2": "value2"}
         assert model.dict_arg_default_values == {"existing-key": "new-value"}

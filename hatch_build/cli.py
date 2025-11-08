@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from enum import Enum
 from logging import Formatter, StreamHandler, getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, List, Literal, Optional, Tuple, Type, Union, get_args, get_origin
@@ -98,6 +99,11 @@ def _recurse_add_fields(parser: ArgumentParser, model: Union["BaseModel", Type["
             except TypeError:
                 # TODO: handle more complex types if needed
                 parser.add_argument(arg_name, type=str, default=default_value)
+        elif isinstance(field_type, type) and issubclass(field_type, Enum):
+            #############
+            # MARK: Enum
+            enum_choices = [e.value for e in field_type]
+            parser.add_argument(arg_name, type=type(enum_choices[0]), choices=enum_choices, default=default_value)
         elif isinstance(field_type, type) and issubclass(field_type, Path):
             #############
             # MARK: Path
