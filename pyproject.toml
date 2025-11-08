@@ -8,7 +8,7 @@ authors = [{name = "the hatch-build authors", email = "t.paine154@gmail.com"}]
 description = "A minimal CLI wrapper around hatchling build"
 readme = "README.md"
 license = { text = "Apache-2.0" }
-version = "0.3.1"
+version = "0.4.0"
 requires-python = ">=3.9"
 keywords = [
     "build",
@@ -60,7 +60,7 @@ Repository = "https://github.com/python-project-templates/hatch-build"
 Homepage = "https://github.com/python-project-templates/hatch-build"
 
 [tool.bumpversion]
-current_version = "0.3.1"
+current_version = "0.4.0"
 commit = true
 tag = true
 commit_args = "-s"
