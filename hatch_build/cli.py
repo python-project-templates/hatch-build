@@ -44,16 +44,18 @@ def parse_extra_args(subparser: Optional[ArgumentParser] = None) -> List[str]:
 
 
 def _is_supported_type(field_type: type) -> bool:
-    if not isinstance(field_type, type):
-        return False
     if get_origin(field_type) is Optional:
         field_type = get_args(field_type)[0]
     elif get_origin(field_type) is Union:
         non_none_types = [t for t in get_args(field_type) if t is not type(None)]
+        if all(_is_supported_type(t) for t in non_none_types):
+            return True
         if len(non_none_types) == 1:
             field_type = non_none_types[0]
     elif get_origin(field_type) is Literal:
         return all(isinstance(arg, (str, int, float, bool, Enum)) for arg in get_args(field_type))
+    if not isinstance(field_type, type):
+        return False
     return field_type in (str, int, float, bool) or issubclass(field_type, Enum)
 
 
@@ -100,6 +102,8 @@ def _recurse_add_fields(parser: ArgumentParser, model: Union["BaseModel", Type["
         # Default value, promote PydanticUndefined to None
         if field.default is PydanticUndefined:
             default_value = None
+        elif field_instance:
+            default_value = field_instance
         else:
             default_value = field.default
 
@@ -167,15 +171,36 @@ def _recurse_add_fields(parser: ArgumentParser, model: Union["BaseModel", Type["
             if get_args(field_type) and not _is_supported_type(get_args(field_type)[0]):
                 # If theres already something here, we can procede by adding the command with a positional indicator
                 if field_instance:
-                    ########################
-                    # MARK: List[BaseModel]
                     for i, value in enumerate(field_instance):
-                        _recurse_add_fields(parser, value, prefix=f"{field_name}.{i}.")
+                        if isinstance(value, BaseModel):
+                            ########################
+                            # MARK: List[BaseModel]
+                            _recurse_add_fields(parser, value, prefix=f"{field_name}.{i}.")
+                            continue
+                        else:
+                            ########################
+                            # MARK: List[str|int|float|bool]
+                            _add_argument(
+                                parser=parser,
+                                name=f"{arg_name}.{i}",
+                                arg_type=type(value),
+                                default_value=value,
+                            )
                     continue
                 # If there's nothing here, we don't know how to address them
                 # TODO: we could just prefill e.g. --field.0, --field.1 up to some limit
                 _log.warning(f"Only lists of str, int, float, or bool are supported - field `{field_name}` got {get_args(field_type)[0]}")
                 continue
+            if field_instance:
+                for i, value in enumerate(field_instance):
+                    ########################
+                    # MARK: List[str|int|float|bool]
+                    _add_argument(
+                        parser=parser,
+                        name=f"{arg_name}.{i}",
+                        arg_type=type(value),
+                        default_value=value,
+                    )
             #################################
             # MARK: List[str|int|float|bool]
             _add_argument(
@@ -419,6 +444,21 @@ def parse_extra_args_model(model: "BaseModel"):
                 key = part
                 value = model_to_set
                 model_to_set = parent_model
+            elif isinstance(model_to_set, list):
+                if value is None:
+                    continue
+
+                # We allow setting list values directly
+                # Grab the list from the parent model, set the value, and continue
+                model_to_set[int(key)] = value
+
+                _log.debug(f"Set list index '{key}' on parent model '{parent_model.__class__.__name__}' with value '{value}'")
+
+                # Now adjust our variable accounting to set the whole dict back on the parent model,
+                # allowing us to trigger any validation
+                key = part
+                value = model_to_set
+                model_to_set = parent_model
             else:
                 _log.warning(f"Cannot set field '{key}' on non-BaseModel instance of type '{type(model_to_set).__name__}'. value: `{value}`")
                 continue
@@ -427,46 +467,44 @@ def parse_extra_args_model(model: "BaseModel"):
         field = model_to_set.__class__.model_fields[key]
         adapter = TypeAdapter(field.annotation)
 
-        _log.debug(f"Setting field '{key}' on model '{model_to_set.__class__.__name__}' with raw value '{value}'")
+        if value is not None:
+            _log.debug(f"Setting field '{key}' on model '{model_to_set.__class__.__name__}' with raw value '{value}'")
 
-        # Convert the value using the type adapter
-        if get_origin(field.annotation) in (list, List):
-            value = value or ""
-            if isinstance(value, list):
-                # Already a list, use as is
-                pass
-            elif isinstance(value, str):
-                # Convert from comma-separated values
-                value = value.split(",")
-            else:
-                # Unknown, raise
-                raise ValueError(f"Cannot convert value '{value}' to list for field '{key}'")
-        elif get_origin(field.annotation) in (dict, Dict):
-            value = value or ""
-            if isinstance(value, dict):
-                # Already a dict, use as is
-                pass
-            elif isinstance(value, str):
-                # Convert from comma-separated key=value pairs
-                dict_items = value.split(",")
-                dict_value = {}
-                for item in dict_items:
-                    if item:
-                        k, v = item.split("=", 1)
-                        # If the key type is an enum, convert
-                        dict_value[k] = v
+            # Convert the value using the type adapter
+            if get_origin(field.annotation) in (list, List):
+                if isinstance(value, list):
+                    # Already a list, use as is
+                    pass
+                elif isinstance(value, str):
+                    # Convert from comma-separated values
+                    value = value.split(",")
+                else:
+                    # Unknown, raise
+                    raise ValueError(f"Cannot convert value '{value}' to list for field '{key}'")
+            elif get_origin(field.annotation) in (dict, Dict):
+                if isinstance(value, dict):
+                    # Already a dict, use as is
+                    pass
+                elif isinstance(value, str):
+                    # Convert from comma-separated key=value pairs
+                    dict_items = value.split(",")
+                    dict_value = {}
+                    for item in dict_items:
+                        if item:
+                            k, v = item.split("=", 1)
+                            # If the key type is an enum, convert
+                            dict_value[k] = v
 
-                # Grab any previously existing dict to preserve other keys
-                existing_dict = getattr(model_to_set, key, {}) or {}
-                _log.debug(f"Existing dict for field '{key}': {existing_dict}")
-                _log.debug(f"New dict items for field '{key}': {dict_value}")
-                dict_value.update(existing_dict)
-                value = dict_value
-            else:
-                # Unknown, raise
-                raise ValueError(f"Cannot convert value '{value}' to dict for field '{key}'")
-        try:
-            if value is not None:
+                    # Grab any previously existing dict to preserve other keys
+                    existing_dict = getattr(model_to_set, key, {}) or {}
+                    _log.debug(f"Existing dict for field '{key}': {existing_dict}")
+                    _log.debug(f"New dict items for field '{key}': {dict_value}")
+                    dict_value.update(existing_dict)
+                    value = dict_value
+                else:
+                    # Unknown, raise
+                    raise ValueError(f"Cannot convert value '{value}' to dict for field '{key}'")
+            try:
                 # Post process and convert keys if needed
                 # pydantic shouldve done this automatically, but alas
                 if isinstance(value, dict) and get_args(field.annotation):
@@ -482,10 +520,11 @@ def parse_extra_args_model(model: "BaseModel"):
 
                 # Set the value on the model
                 setattr(model_to_set, key, value)
-
-        except ValidationError:
-            _log.warning(f"Failed to validate field '{key}' with value '{value}' for model '{model_to_set.__class__.__name__}'")
-            continue
+            except ValidationError:
+                _log.warning(f"Failed to validate field '{key}' with value '{value}' for model '{model_to_set.__class__.__name__}'")
+                continue
+        else:
+            _log.debug(f"Skipping setting field '{key}' on model '{model_to_set.__class__.__name__}' with None value")
 
     return model, kwargs
 
