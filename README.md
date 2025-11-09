@@ -15,5 +15,43 @@ This library provides a minimal CLI `hatch-build`, equivalent to [`hatchling bui
 hatch-build -- --my-custom-plugin-arg
 ```
 
+As a convenience, we provide an `argparse` wrapper to extract the extra args:
+
+```python
+from hatch_build import parse_extra_args
+
+args, extras = parse_extra_args(my_argparse_parser)
+```
+
+### Configuration
+
+If you manage your hatch plugin config as a pydantic model, a function is provided to automatically expose fields as command line arguments.
+
+```python
+from hatchling.builders.hooks.plugin.interface import BuildHookInterface
+from pydantic import BaseModel
+
+
+from hatch_build import parse_extra_args_model
+
+
+class MyPluginConfig(BaseModel, validate_assignment=True):
+    extra_arg: bool = False
+    extra_arg_with_value: str = "default"
+    extra_arg_literal: Literal["a", "b", "c"] = "a"
+
+class MyHatchPlugin(BuildHookInterface[MyPluginConfig]):
+    PLUGIN_NAME = "my-hatch-plugin"
+
+    def initialize(self, version: str, build_data: dict[str, Any]) -> None:
+        my_config_model = MyPluginConfig(**self.config)
+        parse_extra_args_model(my_config_model)
+
+        print(f"{my_config_model.extra_arg} {my_config_model.extra_arg_with_value} {my_config_model.extra_arg_literal}")
+
+# > hatch-build -- --extra-arg --extra-arg-with-value "test" --extra-arg-literal b
+# True test b
+```
+
 > [!NOTE]
 > This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).
