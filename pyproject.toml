@@ -8,19 +8,13 @@ authors = [{name = "the hatch-build authors", email = "t.paine154@gmail.com"}]
 description = "A minimal CLI wrapper around hatchling build"
 readme = "README.md"
 license = { text = "Apache-2.0" }
-<<<<<<< before updating
 version = "0.4.0"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = [
     "build",
     "hatch",
     "packaging",
 ]
-=======
-version = "0.1.0"
-requires-python = ">=3.10"
-keywords = []
->>>>>>> after updating
 
 classifiers = [
     "Development Status :: 3 - Alpha",
