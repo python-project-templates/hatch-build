@@ -5,10 +5,11 @@ from pathlib import Path
 from typing import Dict, List, Literal, Optional, Union
 from unittest.mock import patch
 
+from p2a.model import _initlog
 from pydantic import BaseModel
 
 from hatch_build import __version__
-from hatch_build.cli import _initlog, hatchling, parse_extra_args_model
+from hatch_build.cli import hatchling, parse_extra_args_model
 
 
 class MyEnum(Enum):
@@ -178,17 +179,17 @@ class TestCLIMdel:
         for text in (
             f"[sdist]\ndist/hatch_build-{__version__}.tar.gz",
             f"[wheel]\ndist/hatch_build-{__version__}-py3-none-any.whl",
-            "[hatch_build.cli][WARNING]: Only lists of str, int, float, or bool are supported - field `unsupported_submodel_list` got <class 'test_cli_model.SubModel'>",
-            "[hatch_build.cli][WARNING]: Only dicts with str, int, float, bool, or enum values are supported - field `unsupported_submodel_dict` got value type <class 'test_cli_model.SubModel'>",
-            "[hatch_build.cli][WARNING]: Only Literal types of str, int, float, or bool are supported - field `unsupported_literal` got (b'test',)",
-            "[hatch_build.cli][WARNING]: Only dicts with str, int, float, bool, or enum keys are supported - field `unsupported_dict` got key type <class 'test_cli_model.SubModel'>",
-            "[hatch_build.cli][WARNING]: Only dicts with str, int, float, bool, or enum values are supported - field `unsupported_dict_mixed_types` got value type typing.Union[str, test_cli_model.SubModel]",
-            "[hatch_build.cli][WARNING]: Unsupported field type for argument 'unsupported_random_type': <class 'set'>",
+            "[p2a][WARNING]: Only lists of str, int, float, or bool are supported - field `unsupported_submodel_list` got <class 'test_cli_model.SubModel'>",
+            "[p2a][WARNING]: Only dicts with str, int, float, bool, or enum values are supported - field `unsupported_submodel_dict` got value type <class 'test_cli_model.SubModel'>",
+            "[p2a][WARNING]: Only Literal types of str, int, float, or bool are supported - field `unsupported_literal` got (b'test',)",
+            "[p2a][WARNING]: Only dicts with str, int, float, bool, or enum keys are supported - field `unsupported_dict` got key type <class 'test_cli_model.SubModel'>",
+            "[p2a][WARNING]: Only dicts with str, int, float, bool, or enum values are supported - field `unsupported_dict_mixed_types` got value type typing.Union[str, test_cli_model.SubModel]",
+            "[p2a][WARNING]: Unsupported field type for argument 'unsupported_random_type': <class 'set'>",
         ):
             assert text in stderr
             stderr = stderr.replace(text, "")
-        if "[hatch_build.cli][WARNING]" in stderr.strip():
+        if "[p2a][WARNING]" in stderr.strip():
             for line in stderr.strip().splitlines():
-                if "[hatch_build.cli][WARNING]" in line:
+                if "[p2a][WARNING]" in line:
                     print("UNEXPECTED WARNING:", line)
             assert False
