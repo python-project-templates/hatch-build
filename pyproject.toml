@@ -34,7 +34,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "hatchling>=1.14.1,<1.29",
+    "hatchling>=1.14.1,<1.30",
     "p2a>=0.1.1,<0.2",
     "pkn>=0.3,<0.5",
 ]
