@@ -2,7 +2,7 @@ import sys
 from enum import Enum
 from io import StringIO
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Literal
 from unittest.mock import patch
 
 from p2a.model import _initlog
@@ -28,38 +28,38 @@ class SubModel(BaseModel, validate_assignment=True):
 class MyTopLevelModel(BaseModel, validate_assignment=True):
     extra_arg: bool = False
     extra_arg_with_value: str = "default"
-    extra_arg_with_value_equals: Optional[str] = "default_equals"
+    extra_arg_with_value_equals: str | None = "default_equals"
     extra_arg_literal: Literal["a", "b", "c"] = "a"
 
     enum_arg: MyEnum = MyEnum.OPTION_A
-    list_arg: List[int] = [1, 2, 3]
-    dict_arg: Dict[str, str] = {}
-    dict_arg_default_values: Dict[str, str] = {"existing-key": "existing-value"}
+    list_arg: list[int] = [1, 2, 3]
+    dict_arg: dict[str, str] = {}
+    dict_arg_default_values: dict[str, str] = {"existing-key": "existing-value"}
     path_arg: Path = Path(".")
 
-    list_literal: List[Literal["a", "b", "c"]] = ["a"]
-    dict_literal_key: Dict[Literal["a", "b", "c"], str] = {"a": "first"}
-    dict_literal_value: Dict[str, Literal["a", "b", "c"]] = {"first": "a"}
+    list_literal: list[Literal["a", "b", "c"]] = ["a"]
+    dict_literal_key: dict[Literal["a", "b", "c"], str] = {"a": "first"}
+    dict_literal_value: dict[str, Literal["a", "b", "c"]] = {"first": "a"}
 
-    list_enum: List[MyEnum] = [MyEnum.OPTION_A]
-    dict_enum: Dict[str, MyEnum] = {"first": MyEnum.OPTION_A}
-    dict_enum_key: Dict[MyEnum, str] = {MyEnum.OPTION_A: "first"}
-    dict_enum_key_model_value: Dict[MyEnum, SubModel] = {MyEnum.OPTION_A: SubModel()}
+    list_enum: list[MyEnum] = [MyEnum.OPTION_A]
+    dict_enum: dict[str, MyEnum] = {"first": MyEnum.OPTION_A}
+    dict_enum_key: dict[MyEnum, str] = {MyEnum.OPTION_A: "first"}
+    dict_enum_key_model_value: dict[MyEnum, SubModel] = {MyEnum.OPTION_A: SubModel()}
 
     submodel: SubModel
     submodel2: SubModel = SubModel(sub_args=84, sub_arg_with_value="predefined", sub_arg_enum=MyEnum.OPTION_B, sub_arg_literal="z")
-    submodel3: Optional[SubModel] = None
+    submodel3: SubModel | None = None
 
-    submodel_list_instanced: List[SubModel] = [SubModel()]
-    submodel_dict_instanced: Dict[str, SubModel] = {"a": SubModel()}
+    submodel_list_instanced: list[SubModel] = [SubModel()]
+    submodel_dict_instanced: dict[str, SubModel] = {"a": SubModel()}
 
     unsupported_literal: Literal[b"test"] = b"test"
-    unsupported_dict: Dict[SubModel, str] = {}
-    unsupported_dict_mixed_types: Dict[str, Union[str, SubModel]] = {}
-    unsupported_random_type: Optional[set] = None
+    unsupported_dict: dict[SubModel, str] = {}
+    unsupported_dict_mixed_types: dict[str, str | SubModel] = {}
+    unsupported_random_type: set | None = None
 
-    unsupported_submodel_list: List[SubModel] = []
-    unsupported_submodel_dict: Dict[str, SubModel] = {}
+    unsupported_submodel_list: list[SubModel] = []
+    unsupported_submodel_dict: dict[str, SubModel] = {}
 
 
 class TestCLIMdel:

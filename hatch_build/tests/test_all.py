@@ -1,4 +1,4 @@
-from hatch_build import *  # noqa
+from hatch_build import *
 
 
 def test_all():

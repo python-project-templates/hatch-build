@@ -78,9 +78,8 @@ class TestHatchBuild:
         from io import StringIO
 
         f = StringIO()
-        with patch("sys.exit"):
-            with redirect_stdout(f), redirect_stderr(f):
-                result = hatchling()
+        with patch("sys.exit"), redirect_stdout(f), redirect_stderr(f):
+            result = hatchling()
         output = f.getvalue()
         assert result == 0
         assert "usage: hatch-build [-h] [-d] [-t] [--hooks-only]" in output
