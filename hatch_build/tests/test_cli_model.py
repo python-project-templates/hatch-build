@@ -2,7 +2,7 @@ import sys
 from enum import Enum
 from io import StringIO
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional, Union
 from unittest.mock import patch
 
 from p2a.model import _initlog
@@ -28,7 +28,7 @@ class SubModel(BaseModel, validate_assignment=True):
 class MyTopLevelModel(BaseModel, validate_assignment=True):
     extra_arg: bool = False
     extra_arg_with_value: str = "default"
-    extra_arg_with_value_equals: str | None = "default_equals"
+    extra_arg_with_value_equals: Optional[str] = "default_equals"
     extra_arg_literal: Literal["a", "b", "c"] = "a"
 
     enum_arg: MyEnum = MyEnum.OPTION_A
@@ -48,15 +48,15 @@ class MyTopLevelModel(BaseModel, validate_assignment=True):
 
     submodel: SubModel
     submodel2: SubModel = SubModel(sub_args=84, sub_arg_with_value="predefined", sub_arg_enum=MyEnum.OPTION_B, sub_arg_literal="z")
-    submodel3: SubModel | None = None
+    submodel3: Optional[SubModel] = None
 
     submodel_list_instanced: list[SubModel] = [SubModel()]
     submodel_dict_instanced: dict[str, SubModel] = {"a": SubModel()}
 
     unsupported_literal: Literal[b"test"] = b"test"
     unsupported_dict: dict[SubModel, str] = {}
-    unsupported_dict_mixed_types: dict[str, str | SubModel] = {}
-    unsupported_random_type: set | None = None
+    unsupported_dict_mixed_types: dict[str, Union[str, SubModel]] = {}
+    unsupported_random_type: Optional[set] = None
 
     unsupported_submodel_list: list[SubModel] = []
     unsupported_submodel_dict: dict[str, SubModel] = {}
