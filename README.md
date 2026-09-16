@@ -40,7 +40,7 @@ class MyPluginConfig(BaseModel, validate_assignment=True):
     extra_arg_with_value: str = "default"
     extra_arg_literal: Literal["a", "b", "c"] = "a"
 
-class MyHatchPlugin(BuildHookInterface[MyPluginConfig]):
+class MyHatchPlugin(BuildHookInterface):
     PLUGIN_NAME = "my-hatch-plugin"
 
     def initialize(self, version: str, build_data: dict[str, Any]) -> None:
