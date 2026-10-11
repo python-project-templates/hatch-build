@@ -50,7 +50,7 @@ class MyTopLevelModel(BaseModel, validate_assignment=True):
     dict_enum_key_model_value: dict[MyEnum, SubModel] = {MyEnum.OPTION_A: SubModel()}
 
     submodel: SubModel
-    submodel2: SubModel = SubModel(sub_args=84, sub_arg_with_value="predefined", sub_arg_enum=MyEnum.OPTION_B, sub_arg_literal="z")
+    submodel2: SubModel = SubModel(sub_arg=84, sub_arg_with_value="predefined", sub_arg_enum=MyEnum.OPTION_B, sub_arg_literal="z")
     submodel3: RuntimeOptional[SubModel] = None
 
     submodel_list_instanced: list[SubModel] = [SubModel()]
@@ -171,6 +171,7 @@ class TestCLIMdel:
         assert model.submodel2.sub_arg_enum == MyEnum.OPTION_B
         assert model.submodel2.sub_arg_literal == "z"
 
+        assert model.submodel3 is not None
         assert model.submodel3.sub_arg == 300
         assert model.submodel_list_instanced[0].sub_arg == 400
         assert model.submodel_list_instanced[0].sub_arg_with_value == "list_value"

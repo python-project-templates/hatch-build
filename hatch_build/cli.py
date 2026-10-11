@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from hatchling.cli.build import build_command
 from p2a import parse_extra_args_model as base_parse_extra_args_model
@@ -13,21 +13,22 @@ __all__ = (
     "parse_extra_args",
     "parse_extra_args_model",
 )
-_extras = None
+_extras: list[str] | None = None
+ModelT = TypeVar("ModelT", bound="BaseModel")
 
 
-def parse_extra_args(subparser: ArgumentParser | None = None) -> list[str]:
+def parse_extra_args(subparser: ArgumentParser | None = None) -> tuple[dict[str, Any], list[str]]:
     if subparser is None:
         subparser = ArgumentParser(prog="hatch-build-extras", allow_abbrev=False)
     kwargs, extras = subparser.parse_known_args(_extras or [])
     return vars(kwargs), extras
 
 
-def parse_extra_args_model(model: "BaseModel"):
-    return base_parse_extra_args_model(model, _extras)
+def parse_extra_args_model(model: ModelT) -> tuple[ModelT, list[str]]:
+    return cast(tuple[ModelT, list[str]], base_parse_extra_args_model(model, _extras or []))
 
 
-def _hatchling_internal() -> tuple[Callable | None, dict | None, list[str]]:
+def _hatchling_internal() -> tuple[Callable | None, dict | None, list[str] | None]:
     parser = ArgumentParser(prog="hatch-build", allow_abbrev=False)
     subparsers = parser.add_subparsers()
 
@@ -64,6 +65,7 @@ def hatchling() -> int:
     command, kwargs, extras = _hatchling_internal()
     if command is None:
         return 1
+    assert kwargs is not None
 
     # Set so plugins can reference
     _extras = extras
