@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from hatchling.cli.build import build_command
 from p2a import parse_extra_args_model as base_parse_extra_args_model
@@ -25,7 +25,7 @@ def parse_extra_args(subparser: ArgumentParser | None = None) -> tuple[dict[str,
 
 
 def parse_extra_args_model(model: ModelT) -> tuple[ModelT, list[str]]:
-    return cast(tuple[ModelT, list[str]], base_parse_extra_args_model(model, _extras or []))
+    return base_parse_extra_args_model(model, _extras or [])
 
 
 def _hatchling_internal() -> tuple[Callable | None, dict | None, list[str] | None]:
