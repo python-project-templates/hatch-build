@@ -131,6 +131,13 @@ class TestCLIMdel:
                     "z",
                     "--submodel-dict-instanced.a.sub-arg",
                     "500",
+                    # p2a warns about a field it cannot expose when an argument for it is passed
+                    "--unsupported-submodel-list.0.sub-arg=1",
+                    "--unsupported-submodel-dict.a.sub-arg=1",
+                    "--unsupported-literal=x",
+                    "--unsupported-dict=a=b",
+                    "--unsupported-dict-mixed-types=a=b",
+                    "--unsupported-random-type=x",
                 ],
             ),
             patch("sys.stderr", new_callable=StringIO) as mock_stderr,
@@ -139,7 +146,7 @@ class TestCLIMdel:
             assert hatchling() == 0
             model, extras = parse_extra_args_model(MyTopLevelModel(submodel=SubModel()))
 
-        assert len(extras) == 1
+        assert len(extras) == 7
         assert "--extra-arg-not-in-parser" in extras
 
         assert model.extra_arg is True
